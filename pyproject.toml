@@ -1,0 +1,17 @@
+[project]
+name = "mcp-hayabusa"
+version = "0.1.0"
+description = "MCP server wrapping Hayabusa for EVTX analysis"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "pydantic>=2.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.uv]
+package = false

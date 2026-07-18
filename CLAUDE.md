@@ -18,7 +18,7 @@ MCP server wrapping Hayabusa for EVTX (Windows Event Log) analysis.
 
 ## Setup
 
-- `pip install -r requirements.txt`
+- `uv sync`
 - `python3 scripts/download_hayabusa.py` — downloads latest Hayabusa release for the current platform into `./hayabusa/` and creates a stable `./hayabusa/hayabusa` (or `.exe` on Windows) path pointing at the versioned binary. `./hayabusa/` is gitignored; re-run this script instead of committing the binary.
 
 ## Status
