@@ -1,0 +1,5 @@
+user input: ./hayabusa/hayabusa json-timeline -f /tmp/sample2.evtx -o /tmp/out3.json -w -C -A -a --min-level informational
+[ERROR] Failed to open event file.
+EventFile: /tmp/sample2.evtx
+Error: An error occurred while trying to deserialize evtx stream.
+
