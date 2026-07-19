@@ -43,3 +43,8 @@ Scans an EVTX file with Hayabusa and returns structured results.
 |-----|------|-------------|
 | `file_path` | `str` | Path to the EVTX file to scan. |
 | `min_severity` | `str \| None` | Optional minimum severity filter: `informational`, `low`, `medium`, `high`, `critical`. |
+| `rule_filter` | `str \| None` | Optional substring to match against rule titles (e.g. `"lateral"` or `"mimikatz"`), case-insensitive. |
+| `output_format` | `str` | `"summary"` (default, key fields only) or `"full"` (all fields Hayabusa reports). |
+| `max_results` | `int \| None` | Optional cap on the number of findings returned. |
+
+Returns a dict with `finding_count` (total matches after filtering, before `max_results`), `returned_count` (findings actually returned), and `findings`.
