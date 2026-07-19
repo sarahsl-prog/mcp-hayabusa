@@ -32,6 +32,21 @@ async def handle_list_tools() -> list[types.Tool]:
                         "description": "Optional minimum severity level to filter results "
                         "(informational, low, medium, high, critical).",
                     },
+                    "rule_filter": {
+                        "type": "string",
+                        "description": "Optional substring to match against rule titles "
+                        "(e.g. 'lateral' or 'mimikatz'), case-insensitive.",
+                    },
+                    "output_format": {
+                        "type": "string",
+                        "enum": ["summary", "full"],
+                        "description": "'summary' (default, key fields only) or 'full' "
+                        "(all fields Hayabusa reports).",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Optional cap on the number of findings returned.",
+                    },
                 },
                 "required": ["file_path"],
             },
@@ -50,6 +65,9 @@ async def handle_call_tool(
     result = scanner.scan_evtx(
         file_path=arguments.get("file_path", ""),
         min_severity=arguments.get("min_severity"),
+        rule_filter=arguments.get("rule_filter"),
+        output_format=arguments.get("output_format", "summary"),
+        max_results=arguments.get("max_results"),
     )
     return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 

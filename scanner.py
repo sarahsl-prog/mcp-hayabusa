@@ -19,6 +19,10 @@ _SEVERITY_ALIASES = {
 
 SCAN_TIMEOUT_SECONDS = 300
 
+VALID_OUTPUT_FORMATS = ["summary", "full"]
+
+_SUMMARY_FIELDS = ["Timestamp", "RuleTitle", "Level", "Computer", "Channel", "EventID", "RecordID"]
+
 
 class ScanError(Exception):
     """Raised for expected, user-facing scan failures."""
@@ -41,7 +45,13 @@ def _normalize_severity(min_severity: str | None) -> str | None:
     return normalized
 
 
-def scan_evtx(file_path: str, min_severity: str | None = None) -> dict:
+def scan_evtx(
+    file_path: str,
+    min_severity: str | None = None,
+    rule_filter: str | None = None,
+    output_format: str = "summary",
+    max_results: int | None = None,
+) -> dict:
     """Run Hayabusa against an EVTX file and return structured findings.
 
     Always returns a JSON-serializable dict: either findings, or an "error"
@@ -62,6 +72,14 @@ def scan_evtx(file_path: str, min_severity: str | None = None) -> dict:
             )
 
         severity = _normalize_severity(min_severity)
+
+        if output_format not in VALID_OUTPUT_FORMATS:
+            raise ScanError(
+                f"Invalid output_format '{output_format}'. Must be one of: {', '.join(VALID_OUTPUT_FORMATS)}"
+            )
+
+        if max_results is not None and max_results < 0:
+            raise ScanError("max_results must be a non-negative integer")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             output_path = Path(tmp_dir) / "results.jsonl"
@@ -110,10 +128,29 @@ def scan_evtx(file_path: str, min_severity: str | None = None) -> dict:
                         except json.JSONDecodeError:
                             continue
 
+        if rule_filter:
+            needle = rule_filter.strip().lower()
+            findings = [
+                f for f in findings if needle in f.get("RuleTitle", "").lower()
+            ]
+
+        total_count = len(findings)
+
+        if max_results is not None:
+            findings = findings[:max_results]
+
+        if output_format == "summary":
+            findings = [
+                {k: f[k] for k in _SUMMARY_FIELDS if k in f} for f in findings
+            ]
+
         return {
             "file": str(evtx_path),
             "min_severity": severity,
-            "finding_count": len(findings),
+            "rule_filter": rule_filter,
+            "output_format": output_format,
+            "finding_count": total_count,
+            "returned_count": len(findings),
             "findings": findings,
         }
 
