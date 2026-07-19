@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "hayabusa": {
-      "command": "python",
-      "args": ["server.py"],
-      "cwd": "."
+      "command": "uv",
+      "args": ["run", "--directory", "/home/ssund/Code/mcp-hayabusa", "python", "server.py"]
     }
   }
 }
