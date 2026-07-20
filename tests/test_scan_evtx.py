@@ -71,6 +71,26 @@ def test_scan_evtx_invalid_output_format():
     assert "output_format" in result["error"]
 
 
+def test_scan_evtx_tag_filter_matches():
+    result = server.scan_evtx(str(FIXTURE), tag_filter="attack.credential-access")
+    assert "error" not in result, result.get("error")
+    assert result["finding_count"] > 0
+    assert any("DC Sync" in f["RuleTitle"] for f in result["findings"])
+
+
+def test_scan_evtx_tag_filter_no_match():
+    result = server.scan_evtx(str(FIXTURE), tag_filter="attack.nonexistentxyz")
+    assert "error" not in result, result.get("error")
+    assert result["finding_count"] == 0
+    assert result["findings"] == []
+
+
+def test_scan_evtx_tag_filter_blank_is_error():
+    result = server.scan_evtx(str(FIXTURE), tag_filter=" , ")
+    assert "error" in result
+    assert "tag_filter" in result["error"]
+
+
 def test_get_hayabusa_rules_lists_rules():
     result = server.get_hayabusa_rules()
     assert "error" not in result, result.get("error")

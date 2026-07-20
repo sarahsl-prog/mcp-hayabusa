@@ -12,6 +12,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.0.0",
+    "types-PyYAML>=6.0.0",
 ]
 
 [tool.uv]

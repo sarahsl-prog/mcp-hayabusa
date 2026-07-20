@@ -46,5 +46,16 @@ Scans an EVTX file with Hayabusa and returns structured results.
 | `rule_filter` | `str \| None` | Optional substring to match against rule titles (e.g. `"lateral"` or `"mimikatz"`), case-insensitive. |
 | `output_format` | `str` | `"summary"` (default, key fields only) or `"full"` (all fields Hayabusa reports). |
 | `max_results` | `int \| None` | Optional cap on the number of findings returned. |
+| `tag_filter` | `str \| None` | Optional comma-separated MITRE ATT&CK / rule tags to restrict which rules run (e.g. `"attack.credential-access"` or `"attack.credential-access,attack.lateral-movement"`). Use `get_hayabusa_rules` to discover available tags. |
 
 Returns a dict with `finding_count` (total matches after filtering, before `max_results`), `returned_count` (findings actually returned), and `findings`.
+
+### `get_hayabusa_rules`
+
+Lists available Hayabusa detection rules, optionally filtered by keyword.
+
+| Arg | Type | Description |
+|-----|------|-------------|
+| `keyword` | `str \| None` | Optional substring to match against a rule's title, description, or tags, case-insensitive. |
+
+Returns a dict with `rule_count` and `rules` (each with `title`, `id`, `level`, `description`, `tags`, `path`).

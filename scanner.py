@@ -54,6 +54,7 @@ def scan_evtx(
     rule_filter: str | None = None,
     output_format: str = "summary",
     max_results: int | None = None,
+    tag_filter: str | None = None,
 ) -> dict:
     """Run Hayabusa against an EVTX file and return structured findings.
 
@@ -84,6 +85,12 @@ def scan_evtx(
         if max_results is not None and max_results < 0:
             raise ScanError("max_results must be a non-negative integer")
 
+        tags = None
+        if tag_filter:
+            tags = [t.strip() for t in tag_filter.split(",") if t.strip()]
+            if not tags:
+                raise ScanError("tag_filter must contain at least one non-empty tag")
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             output_path = Path(tmp_dir) / "results.jsonl"
             cmd = [
@@ -98,6 +105,8 @@ def scan_evtx(
             ]
             if severity:
                 cmd += ["-m", severity]
+            if tags:
+                cmd += ["--include-tag", ",".join(tags)]
 
             try:
                 result = subprocess.run(
@@ -151,6 +160,7 @@ def scan_evtx(
             "file": str(evtx_path),
             "min_severity": severity,
             "rule_filter": rule_filter,
+            "tag_filter": tag_filter,
             "output_format": output_format,
             "finding_count": total_count,
             "returned_count": len(findings),

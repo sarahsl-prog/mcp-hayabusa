@@ -15,6 +15,7 @@ def scan_evtx(
     rule_filter: str | None = None,
     output_format: str = "summary",
     max_results: int | None = None,
+    tag_filter: str | None = None,
 ) -> dict:
     """Scan an EVTX file with Hayabusa and return structured results.
 
@@ -27,8 +28,14 @@ def scan_evtx(
         output_format: "summary" (default, key fields only) or "full"
             (all fields Hayabusa reports).
         max_results: Optional cap on the number of findings returned.
+        tag_filter: Optional comma-separated MITRE ATT&CK / rule tags to
+            restrict which rules run (e.g. "attack.credential-access" or
+            "attack.credential-access,attack.lateral-movement"). Use
+            get_hayabusa_rules to discover available tags.
     """
-    return scanner.scan_evtx(file_path, min_severity, rule_filter, output_format, max_results)
+    return scanner.scan_evtx(
+        file_path, min_severity, rule_filter, output_format, max_results, tag_filter
+    )
 
 
 @mcp.tool()
