@@ -11,6 +11,15 @@ python3 scripts/download_hayabusa.py
 
 `download_hayabusa.py` downloads the latest Hayabusa release for your platform into `./hayabusa/` and creates a stable `./hayabusa/hayabusa` (`.exe` on Windows) path. `./hayabusa/` is gitignored — re-run the script instead of committing the binary.
 
+Sigma rules for the detection knowledge base are mirrored from [SigmaHQ/sigma](https://github.com/SigmaHQ/sigma.git) into `./rules/`:
+
+```bash
+git clone https://github.com/SigmaHQ/sigma.git sigma-rules
+cp -r sigma-rules/rules ./rules
+```
+
+`./rules/` is gitignored — re-clone/pull and re-copy instead of committing the mirror.
+
 ## Running the server
 
 ```bash
