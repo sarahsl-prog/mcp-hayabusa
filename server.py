@@ -31,6 +31,18 @@ def scan_evtx(
     return scanner.scan_evtx(file_path, min_severity, rule_filter, output_format, max_results)
 
 
+@mcp.tool()
+def get_hayabusa_rules(keyword: str | None = None) -> dict:
+    """List available Hayabusa detection rules, optionally filtered by keyword.
+
+    Args:
+        keyword: Optional substring to match against a rule's title,
+            description, or tags (e.g. "mimikatz" or "lateral"),
+            case-insensitive.
+    """
+    return scanner.list_rules(keyword)
+
+
 def main() -> None:
     mcp.run()
 

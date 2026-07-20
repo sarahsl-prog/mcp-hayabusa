@@ -6,8 +6,11 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parent
 HAYABUSA_DIR = REPO_ROOT / "hayabusa"
+RULES_DIR = HAYABUSA_DIR / "rules"
 
 VALID_SEVERITIES = ["informational", "low", "medium", "high", "critical"]
 
@@ -152,6 +155,67 @@ def scan_evtx(
             "finding_count": total_count,
             "returned_count": len(findings),
             "findings": findings,
+        }
+
+    except ScanError as e:
+        return {"error": str(e)}
+    except Exception as e:
+        return {"error": f"Unexpected error: {e}"}
+
+
+def list_rules(keyword: str | None = None) -> dict:
+    """List available Hayabusa detection rules, optionally filtered by keyword.
+
+    Always returns a JSON-serializable dict: either rules, or an "error" key
+    describing what went wrong. Never raises.
+    """
+    try:
+        if not RULES_DIR.exists():
+            raise ScanError(
+                f"Rules directory not found at {RULES_DIR}. "
+                "Run scripts/download_hayabusa.py to install it."
+            )
+
+        needle = keyword.strip().lower() if keyword else None
+
+        rules = []
+        for rule_path in RULES_DIR.rglob("*.yml"):
+            if ".git" in rule_path.parts:
+                continue
+            try:
+                with rule_path.open(encoding="utf-8") as f:
+                    doc = yaml.safe_load(f)
+            except yaml.YAMLError:
+                continue
+            if not isinstance(doc, dict) or "title" not in doc:
+                continue
+
+            title = doc.get("title", "")
+            description = doc.get("description")
+            tags = doc.get("tags") or []
+
+            if needle:
+                haystack = " ".join([title, description or "", " ".join(tags)]).lower()
+                if needle not in haystack:
+                    continue
+
+            rules.append(
+                {
+                    "title": title,
+                    "id": doc.get("id"),
+                    "level": doc.get("level"),
+                    "description": description,
+                    "tags": tags,
+                    "path": str(rule_path.relative_to(RULES_DIR)),
+                }
+            )
+
+        rules.sort(key=lambda r: r["title"].lower())
+
+        return {
+            "keyword": keyword,
+            "rule_count": len(rules),
+            "rules": rules,
         }
 
     except ScanError as e:
