@@ -4,13 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-MCP server wrapping Hayabusa for EVTX (Windows Event Log) analysis.
+MCP server wrapping Hayabusa for EVTX (Windows Event Log) analysis, and expanding into a detection engineering knowledge base.
 
 ### Goals
 - Expose a `scan_evtx` tool that runs Hayabusa against EVTX files
 - Return results as structured JSON
-- Support filtering by severity level
+- Support filtering by severity level, rule title, and MITRE ATT&CK tag
 - Handle errors gracefully
+- Expose Sigma rules as browsable resources
+- Expose ATT&CK technique mappings
+- Allow Claude to query detection coverage
+- Combine with Hayabusa scanning from Module 3
+
+### Structure
+- `server.py` — MCP server with resources and tools
+- `scanner.py` — Hayabusa scan/rule-listing logic, shared by server entry points
+- `hayabusa/` — downloaded Hayabusa binary + bundled Sigma rules (gitignored, see Setup)
+- `rules/` — Sigma detection rules (YAML)
+- `mappings/` — ATT&CK technique to rule mappings
 
 ### Stack
 - Python, using the `mcp` library
@@ -23,4 +34,4 @@ MCP server wrapping Hayabusa for EVTX (Windows Event Log) analysis.
 
 ## Status
 
-No server source code yet (`scripts/download_hayabusa.py` is the only code so far). This file will need commands (run/lint/test) and architecture notes added once the MCP server is scaffolded.
+`server.py` exposes two tools: `scan_evtx` (min_severity/rule_filter/tag_filter/output_format/max_results params) and `get_hayabusa_rules` (keyword search over Hayabusa's bundled Sigma rules). `rules/` and `mappings/` for the detection-coverage knowledge base don't exist yet.
