@@ -20,7 +20,7 @@ MCP server wrapping Hayabusa for EVTX (Windows Event Log) analysis. In addition 
 - `server.py` — MCP server with resources and tools
 - `scanner.py` — Hayabusa scan/rule-listing logic, shared by server entry points
 - `sigma_rules.py` — Sigma rule listing/lookup logic over `rules/`, backs the `detection://rules*` resources
-- `attack_techniques.py` — ATT&CK technique/tactic lookup + rule-coverage assessment, backs `detection://attack/techniques/{id}` and the `analyze_coverage` tool
+- `attack_techniques.py` — ATT&CK technique/tactic lookup + rule-coverage assessment, backs `detection://attack/techniques/{id}` and the `analyze_coverage`/`suggest_rule` tools
 - `hayabusa/` — downloaded Hayabusa binary + bundled Sigma rules (gitignored, see Setup)
 - `rules/` — Sigma detection rules (YAML, gitignored, see Setup)
 - `mappings/` — ATT&CK technique/tactic to rule mappings (`attack_techniques.json`, `attack_tactics.json`, generated, see Setup)
@@ -38,7 +38,7 @@ MCP server wrapping Hayabusa for EVTX (Windows Event Log) analysis. In addition 
 
 ## Status
 
-`server.py` exposes three tools: `scan_evtx` (min_severity/rule_filter/tag_filter/output_format/max_results params), `get_hayabusa_rules` (keyword search over Hayabusa's bundled Sigma rules), and `analyze_coverage` (technique ID or tactic name → coverage report across our Sigma rules).
+`server.py` exposes four tools: `scan_evtx` (min_severity/rule_filter/tag_filter/output_format/max_results params), `get_hayabusa_rules` (keyword search over Hayabusa's bundled Sigma rules), `analyze_coverage` (technique ID or tactic name → coverage report across our Sigma rules), and `suggest_rule` (technique ID → detection-approach suggestion, optionally writing a Sigma rule skeleton to `rules/suggested/`).
 
 It also exposes detection-KB resources backed by `rules/` (2941 Sigma rules from a SigmaHQ mirror) and `mappings/attack_techniques.json` (697 ATT&CK techniques) / `mappings/attack_tactics.json` (15 tactics):
 - `detection://rules` — list all Sigma rules

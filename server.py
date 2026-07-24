@@ -65,6 +65,24 @@ def analyze_coverage(identifier: str) -> dict:
     return attack_techniques.analyze_coverage(identifier)
 
 
+@mcp.tool()
+def suggest_rule(technique_id: str, create_template: bool = False) -> dict:
+    """Check coverage for an ATT&CK technique and suggest a detection approach.
+
+    If we already have rules covering the technique, reports that coverage
+    instead of suggesting anything new. Otherwise returns a suggested
+    detection approach and, if requested, writes a Sigma rule skeleton to
+    rules/suggested/ for a human to fill in and refine.
+
+    Args:
+        technique_id: An ATT&CK technique ID (e.g. "T1078", "1003.001").
+        create_template: If True, write a Sigma rule skeleton to
+            rules/suggested/ when coverage is missing or partial. Does
+            nothing if a template already exists there for this technique.
+    """
+    return attack_techniques.suggest_rule(technique_id, create_template)
+
+
 @mcp.resource("detection://rules")
 def list_sigma_rules() -> dict:
     """List all Sigma detection rules available under rules/."""

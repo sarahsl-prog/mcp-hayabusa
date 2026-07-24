@@ -87,6 +87,19 @@ Analyzes detection coverage for an ATT&CK technique ID or tactic name, combining
 
 For a technique ID, returns a single-technique report. For a tactic name, returns a report across every technique in that tactic: `query`, `query_type`, `tactic`, `tactic_id`, `technique_count`, `covered_count`, `partial_count`, `gap_count`, `gaps` (technique entries with 0 detecting rules), and `techniques` (full per-technique breakdown, each with `technique_id`, `name`, `rule_count`, `coverage`). Returns an `error` key for an unrecognized ID or tactic name.
 
+### `suggest_rule`
+
+Checks coverage for a single ATT&CK technique and, if it's not already covered, suggests a detection approach — optionally writing a Sigma rule skeleton to `rules/suggested/` for a human to fill in.
+
+| Arg | Type | Description |
+|-----|------|-------------|
+| `technique_id` | `str` | An ATT&CK technique ID (e.g. `"T1078"`, `"1003.001"`). |
+| `create_template` | `bool` | If `True`, write a Sigma rule skeleton to `rules/suggested/{technique_id}_suggested.yml` when coverage is partial or a gap. Default `False`. Fails if a template already exists for the technique — it won't overwrite. |
+
+Returns `technique_id`, `name`, `coverage`, `rule_count`, `detecting_rules`. If already `"covered"`, returns a `message` and stops there — no suggestion generated. Otherwise returns `suggested_approach` (tactic-based detection guidance) and `template_path` (relative to `rules/`, or `null` if `create_template` was `False`). Returns an `error` key for an unknown technique ID or a template that already exists.
+
+The generated template is a starting point, not a working rule — its `logsource` and `detection.selection` fields are `TODO` placeholders that need real telemetry fields before the rule can run.
+
 ## Resources
 
 ### `detection://rules`
