@@ -46,9 +46,23 @@ graph LR
 
     T4 -.writes suggested rule.-> RULES
 
-    Client --> T1 & T2 & T3 & T4
-    Client --> R1 & R2 & R3 & R4
+    Client --> T1
+    Client --> T2
+    Client --> T3
+    Client --> T4
+    Client --> R1
+    Client --> R2
+    Client --> R3
+    Client --> R4
+
+    linkStyle 0,1,2 stroke:#e65100,stroke-width:2px
+    linkStyle 3,4,5,6,7 stroke:#00695c,stroke-width:2px
+    linkStyle 8,9,10 stroke:#6a1b9a,stroke-width:2px
+    linkStyle 11 stroke:#c62828,stroke-width:2px
+    linkStyle 12,13,14,15,16,17,18,19 stroke:#616161,stroke-width:1px
 ```
+
+Edge colors: orange = raw file inputs, teal = `rules/`, purple = `mappings/`, red dashed = `suggest_rule`'s write-back, gray = client calls.
 
 ## Setup
 
