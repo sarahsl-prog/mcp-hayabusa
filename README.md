@@ -2,6 +2,54 @@
 
 MCP server wrapping [Hayabusa](https://github.com/Yamato-Security/hayabusa) for EVTX (Windows Event Log) analysis.
 
+## Architecture
+
+```mermaid
+graph LR
+    subgraph Inputs
+        EVTX[EVTX file]
+        HB[hayabusa/ binary +\nbundled Sigma rules]
+        RULES[rules/\nSigma mirror]
+        MAP[mappings/\nattack_techniques.json\nattack_tactics.json]
+    end
+
+    subgraph "MCP Server (server.py)"
+        subgraph Tools
+            T1[scan_evtx]
+            T2[get_hayabusa_rules]
+            T3[analyze_coverage]
+            T4[suggest_rule]
+        end
+        subgraph Resources
+            R1["detection://rules"]
+            R2["detection://rules/{rule_name}"]
+            R3["detection://rules/by-technique/{technique_id}"]
+            R4["detection://attack/techniques/{technique_id}"]
+        end
+    end
+
+    Client[Claude / MCP client]
+
+    EVTX --> T1
+    HB --> T1
+    HB --> T2
+
+    RULES --> R1
+    RULES --> R2
+    RULES --> R3
+    RULES --> T3
+    RULES --> T4
+
+    MAP --> R4
+    MAP --> T3
+    MAP --> T4
+
+    T4 -.writes suggested rule.-> RULES
+
+    Client --> T1 & T2 & T3 & T4
+    Client --> R1 & R2 & R3 & R4
+```
+
 ## Setup
 
 ```bash
