@@ -1,0 +1,31 @@
+title: New Scheduled Task Creation Via Schtasks
+id: 7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f
+status: test
+description: >
+  Detects creation of a new scheduled task via schtasks.exe. Medium
+  severity - scheduled tasks are a common persistence mechanism but are
+  also created routinely by legitimate software installers and IT
+  automation, so this needs context before escalating.
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+tags:
+  - attack.persistence
+  - attack.t1053.005
+author: detection-engineering
+date: 2026-01-01
+level: medium
+falsepositives:
+  - Approved monitoring/agent software registering its own scheduled task on install
+  - Group Policy or MDM-pushed startup scripts using schtasks.exe
+  - Software deployment tooling (SCCM, Intune) creating maintenance tasks
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains: '/create'
+  condition: selection
+# test case: CommandLine="schtasks.exe /create /sc onlogon /tn Updater /tr C:\temp\payload.exe"
+#            fires on the selection condition above; verified against a
+#            synthetic process_creation event.
