@@ -3,7 +3,9 @@
 
 from mcp.server.fastmcp import FastMCP
 
+import attack_techniques
 import scanner
+import sigma_rules
 
 mcp = FastMCP("hayabusa")
 
@@ -48,6 +50,61 @@ def get_hayabusa_rules(keyword: str | None = None) -> dict:
             case-insensitive.
     """
     return scanner.list_rules(keyword)
+
+
+@mcp.tool()
+def analyze_coverage(identifier: str) -> dict:
+    """Analyze detection coverage for an ATT&CK technique ID or tactic name.
+
+    Args:
+        identifier: An ATT&CK technique ID (e.g. "T1078", "1003.001") or a
+            tactic name (e.g. "Credential Access", "privilege-escalation").
+            Reports which techniques are covered, partially covered, or
+            gaps based on our Sigma rules' `attack.tXXXX` tags.
+    """
+    return attack_techniques.analyze_coverage(identifier)
+
+
+@mcp.tool()
+def suggest_rule(technique_id: str, create_template: bool = False) -> dict:
+    """Check coverage for an ATT&CK technique and suggest a detection approach.
+
+    If we already have rules covering the technique, reports that coverage
+    instead of suggesting anything new. Otherwise returns a suggested
+    detection approach and, if requested, writes a Sigma rule skeleton to
+    rules/suggested/ for a human to fill in and refine.
+
+    Args:
+        technique_id: An ATT&CK technique ID (e.g. "T1078", "1003.001").
+        create_template: If True, write a Sigma rule skeleton to
+            rules/suggested/ when coverage is missing or partial. Does
+            nothing if a template already exists there for this technique.
+    """
+    return attack_techniques.suggest_rule(technique_id, create_template)
+
+
+@mcp.resource("detection://rules")
+def list_sigma_rules() -> dict:
+    """List all Sigma detection rules available under rules/."""
+    return sigma_rules.list_rules()
+
+
+@mcp.resource("detection://rules/{rule_name}")
+def get_sigma_rule(rule_name: str) -> dict:
+    """Get a specific Sigma rule's full content by rule name (filename stem)."""
+    return sigma_rules.get_rule(rule_name)
+
+
+@mcp.resource("detection://rules/by-technique/{technique_id}")
+def get_sigma_rules_by_technique(technique_id: str) -> dict:
+    """List Sigma rules tagged with a given MITRE ATT&CK technique ID (e.g. T1078)."""
+    return sigma_rules.list_rules_by_technique(technique_id)
+
+
+@mcp.resource("detection://attack/techniques/{technique_id}")
+def get_attack_technique(technique_id: str) -> dict:
+    """Get an ATT&CK technique's name/description, detecting rules, and coverage."""
+    return attack_techniques.get_technique(technique_id)
 
 
 def main() -> None:

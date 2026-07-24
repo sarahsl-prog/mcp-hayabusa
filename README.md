@@ -2,6 +2,68 @@
 
 MCP server wrapping [Hayabusa](https://github.com/Yamato-Security/hayabusa) for EVTX (Windows Event Log) analysis.
 
+## Architecture
+
+```mermaid
+graph LR
+    subgraph Inputs
+        EVTX[EVTX file]
+        HB[hayabusa/ binary +\nbundled Sigma rules]
+        RULES[rules/\nSigma mirror]
+        MAP[mappings/\nattack_techniques.json\nattack_tactics.json]
+    end
+
+    subgraph "MCP Server (server.py)"
+        subgraph Tools
+            T1[scan_evtx]
+            T2[get_hayabusa_rules]
+            T3[analyze_coverage]
+            T4[suggest_rule]
+        end
+        subgraph Resources
+            R1["detection://rules"]
+            R2["detection://rules/{rule_name}"]
+            R3["detection://rules/by-technique/{technique_id}"]
+            R4["detection://attack/techniques/{technique_id}"]
+        end
+    end
+
+    Client[Claude / MCP client]
+
+    EVTX --> T1
+    HB --> T1
+    HB --> T2
+
+    RULES --> R1
+    RULES --> R2
+    RULES --> R3
+    RULES --> T3
+    RULES --> T4
+
+    MAP --> R4
+    MAP --> T3
+    MAP --> T4
+
+    T4 -.writes suggested rule.-> RULES
+
+    Client --> T1
+    Client --> T2
+    Client --> T3
+    Client --> T4
+    Client --> R1
+    Client --> R2
+    Client --> R3
+    Client --> R4
+
+    linkStyle 0,1,2 stroke:#e65100,stroke-width:2px
+    linkStyle 3,4,5,6,7 stroke:#00695c,stroke-width:2px
+    linkStyle 8,9,10 stroke:#6a1b9a,stroke-width:2px
+    linkStyle 11 stroke:#c62828,stroke-width:2px
+    linkStyle 12,13,14,15,16,17,18,19 stroke:#616161,stroke-width:1px
+```
+
+Edge colors: orange = raw file inputs, teal = `rules/`, purple = `mappings/`, red dashed = `suggest_rule`'s write-back, gray = client calls.
+
 ## Setup
 
 ```bash
@@ -19,6 +81,14 @@ cp -r sigma-rules/rules ./rules
 ```
 
 `./rules/` is gitignored — re-clone/pull and re-copy instead of committing the mirror.
+
+ATT&CK technique metadata for the coverage-assessment resource is generated from the [MITRE ATT&CK STIX bundle](https://github.com/mitre-attack/attack-stix-data):
+
+```bash
+python3 scripts/download_attack_data.py
+```
+
+`download_attack_data.py` downloads the ~50MB STIX bundle and extracts compact indexes to `mappings/attack_techniques.json` (id/name/description/tactics) and `mappings/attack_tactics.json` (shortname → id/name). Re-run the script instead of committing the raw bundle.
 
 ## Running the server
 
@@ -68,3 +138,52 @@ Lists available Hayabusa detection rules, optionally filtered by keyword.
 | `keyword` | `str \| None` | Optional substring to match against a rule's title, description, or tags, case-insensitive. |
 
 Returns a dict with `rule_count` and `rules` (each with `title`, `id`, `level`, `description`, `tags`, `path`).
+
+### `analyze_coverage`
+
+Analyzes detection coverage for an ATT&CK technique ID or tactic name, combining `mappings/attack_techniques.json`/`attack_tactics.json` with the Sigma rules under `./rules/`.
+
+| Arg | Type | Description |
+|-----|------|-------------|
+| `identifier` | `str` | An ATT&CK technique ID (e.g. `"T1078"`, `"1003.001"`) or a tactic name (e.g. `"Credential Access"`, `"privilege-escalation"`). |
+
+For a technique ID, returns a single-technique report. For a tactic name, returns a report across every technique in that tactic: `query`, `query_type`, `tactic`, `tactic_id`, `technique_count`, `covered_count`, `partial_count`, `gap_count`, `gaps` (technique entries with 0 detecting rules), and `techniques` (full per-technique breakdown, each with `technique_id`, `name`, `rule_count`, `coverage`). Returns an `error` key for an unrecognized ID or tactic name.
+
+### `suggest_rule`
+
+Checks coverage for a single ATT&CK technique and, if it's not already covered, suggests a detection approach — optionally writing a Sigma rule skeleton to `rules/suggested/` for a human to fill in.
+
+| Arg | Type | Description |
+|-----|------|-------------|
+| `technique_id` | `str` | An ATT&CK technique ID (e.g. `"T1078"`, `"1003.001"`). |
+| `create_template` | `bool` | If `True`, write a Sigma rule skeleton to `rules/suggested/{technique_id}_suggested.yml` when coverage is partial or a gap. Default `False`. Fails if a template already exists for the technique — it won't overwrite. |
+
+Returns `technique_id`, `name`, `coverage`, `rule_count`, `detecting_rules`. If already `"covered"`, returns a `message` and stops there — no suggestion generated. Otherwise returns `suggested_approach` (tactic-based detection guidance) and `template_path` (relative to `rules/`, or `null` if `create_template` was `False`). Returns an `error` key for an unknown technique ID or a template that already exists.
+
+The generated template is a starting point, not a working rule — its `logsource` and `detection.selection` fields are `TODO` placeholders that need real telemetry fields before the rule can run.
+
+## Resources
+
+### `detection://rules`
+
+Lists all Sigma rules under `./rules/`.
+
+Returns a dict with `rule_count` and `rules` (each with `rule_name`, `title`, `id`, `level`, `tags`, `path`).
+
+### `detection://rules/{rule_name}`
+
+Gets a specific Sigma rule's full YAML content by rule name (filename stem, e.g. `lnx_clear_syslog`).
+
+Returns a dict with `rule_name`, `path`, and `rule` (the full parsed YAML). Returns an `error` key if no rule matches.
+
+### `detection://rules/by-technique/{technique_id}`
+
+Lists Sigma rules tagged with a given MITRE ATT&CK technique (e.g. `T1078`, `t1003.001`, or bare `1078`).
+
+Returns a dict with `technique_id`, `rule_count`, and `rules` (same shape as `detection://rules`).
+
+### `detection://attack/techniques/{technique_id}`
+
+Gets an ATT&CK technique's name/description plus our detection coverage for it, cross-referencing `attack.tXXXX` tags on our Sigma rules. Requires `mappings/attack_techniques.json` (see Setup).
+
+Returns a dict with `technique_id`, `name`, `description`, `tactics`, `detecting_rules`, `rule_count`, and `coverage` (`"covered"` at 2+ rules, `"partial"` at 1, `"gap"` at 0). Returns an `error` key for unknown technique IDs.

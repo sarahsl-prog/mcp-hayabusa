@@ -1,0 +1,62 @@
+{
+  "collection": {
+    "id": "TA0009",
+    "name": "Collection"
+  },
+  "command-and-control": {
+    "id": "TA0011",
+    "name": "Command and Control"
+  },
+  "credential-access": {
+    "id": "TA0006",
+    "name": "Credential Access"
+  },
+  "defense-impairment": {
+    "id": "TA0112",
+    "name": "Defense Impairment"
+  },
+  "discovery": {
+    "id": "TA0007",
+    "name": "Discovery"
+  },
+  "execution": {
+    "id": "TA0002",
+    "name": "Execution"
+  },
+  "exfiltration": {
+    "id": "TA0010",
+    "name": "Exfiltration"
+  },
+  "impact": {
+    "id": "TA0040",
+    "name": "Impact"
+  },
+  "initial-access": {
+    "id": "TA0001",
+    "name": "Initial Access"
+  },
+  "lateral-movement": {
+    "id": "TA0008",
+    "name": "Lateral Movement"
+  },
+  "persistence": {
+    "id": "TA0003",
+    "name": "Persistence"
+  },
+  "privilege-escalation": {
+    "id": "TA0004",
+    "name": "Privilege Escalation"
+  },
+  "reconnaissance": {
+    "id": "TA0043",
+    "name": "Reconnaissance"
+  },
+  "resource-development": {
+    "id": "TA0042",
+    "name": "Resource Development"
+  },
+  "stealth": {
+    "id": "TA0005",
+    "name": "Stealth"
+  }
+}
