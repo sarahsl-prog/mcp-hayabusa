@@ -76,6 +76,13 @@ When reviewing or writing a rule, verify all five before considering it done:
 - [ ] At least one test case is documented (reference, PoC, or sample event)
 - [ ] Filename and title use lowercase_with_underscores
 
+## References
+
+When writing rules, consult:
+- `references/example-rules/` - Well-formatted examples to follow
+- `references/severity-guide.md` - Severity level guidance
+- `references/false-positive-patterns.md` - Common FP documentation
+
 ## Using this project's tools
 
 - `analyze_coverage` and the `detection://attack/techniques/{id}` resource
