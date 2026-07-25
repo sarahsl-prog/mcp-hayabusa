@@ -4,13 +4,22 @@
 from mcp.server.fastmcp import FastMCP
 
 import attack_techniques
+import mlflow_logging
 import scanner
 import sigma_rules
 
 mcp = FastMCP("hayabusa")
 
+_ORIGINAL_SIGNATURES = {
+    "scan_evtx": ["file_path", "min_severity", "rule_filter", "output_format", "max_results", "tag_filter"],
+    "get_hayabusa_rules": ["keyword"],
+    "analyze_coverage": ["identifier"],
+    "suggest_rule": ["technique_id", "create_template"],
+}
+
 
 @mcp.tool()
+@mlflow_logging.log_tool_call
 def scan_evtx(
     file_path: str,
     min_severity: str | None = None,
@@ -41,6 +50,7 @@ def scan_evtx(
 
 
 @mcp.tool()
+@mlflow_logging.log_tool_call
 def get_hayabusa_rules(keyword: str | None = None) -> dict:
     """List available Hayabusa detection rules, optionally filtered by keyword.
 
@@ -53,6 +63,7 @@ def get_hayabusa_rules(keyword: str | None = None) -> dict:
 
 
 @mcp.tool()
+@mlflow_logging.log_tool_call
 def analyze_coverage(identifier: str) -> dict:
     """Analyze detection coverage for an ATT&CK technique ID or tactic name.
 
@@ -66,6 +77,7 @@ def analyze_coverage(identifier: str) -> dict:
 
 
 @mcp.tool()
+@mlflow_logging.log_tool_call
 def suggest_rule(technique_id: str, create_template: bool = False) -> dict:
     """Check coverage for an ATT&CK technique and suggest a detection approach.
 
