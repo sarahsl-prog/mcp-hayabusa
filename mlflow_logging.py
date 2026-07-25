@@ -30,6 +30,19 @@ def _current_user() -> str:
     return os.environ.get("MLFLOW_TRACKING_USER") or getpass.getuser()
 
 
+def _safe_end_run() -> None:
+    """End the active MLflow run, swallowing any failure.
+
+    MLflow-side failures must never break the wrapped tool: a failing
+    end_run() should not raise past this call, and should not mask a
+    real result/exception from the wrapped tool.
+    """
+    try:
+        mlflow.end_run()
+    except Exception:
+        pass
+
+
 def _log_result_fields(result: dict) -> None:
     for key, value in result.items():
         if key == "error":
@@ -47,6 +60,12 @@ def log_tool_call(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        # Self-heal: a previously swallowed end_run() failure can leave a
+        # stale run on the active-run stack, which would break start_run()
+        # below on every subsequent call. Clear it first if present.
+        if mlflow.active_run() is not None:
+            _safe_end_run()
+
         try:
             configure()
             mlflow.start_run(run_name=func.__name__)
@@ -57,7 +76,7 @@ def log_tool_call(func):
         except Exception:
             # Logging must never block the tool itself.
             if mlflow.active_run() is not None:
-                mlflow.end_run()
+                _safe_end_run()
             return func(*args, **kwargs)
 
         try:
@@ -67,7 +86,7 @@ def log_tool_call(func):
                 mlflow.set_tag("status", "exception")
             except Exception:
                 pass
-            mlflow.end_run()
+            _safe_end_run()
             raise
 
         try:
@@ -81,7 +100,7 @@ def log_tool_call(func):
         except Exception:
             pass
         finally:
-            mlflow.end_run()
+            _safe_end_run()
 
         return result
 

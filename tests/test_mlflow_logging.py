@@ -127,3 +127,69 @@ def test_original_exception_reraised_even_if_mlflow_also_fails(tracking_dir, mon
 
     # Run should be closed even though mlflow.set_tag() failed
     assert mlflow.active_run() is None
+
+
+def test_success_returns_result_even_if_end_run_fails(tracking_dir, monkeypatch):
+    """Final review finding 1: a failing end_run() on the success path must not
+    propagate and must not prevent the tool's real result from being returned."""
+
+    def raise_fn(*args, **kwargs):
+        raise RuntimeError("MLflow end_run failed")
+
+    monkeypatch.setattr(mlflow, "end_run", raise_fn)
+
+    @mlflow_logging.log_tool_call
+    def suggest_rule(technique_id):
+        return {"suggestion": "try this rule"}
+
+    result = suggest_rule(technique_id="T1078")
+    assert result == {"suggestion": "try this rule"}
+
+
+def test_original_exception_reraised_even_if_end_run_fails(tracking_dir, monkeypatch):
+    """Final review finding 1: a failing end_run() on the exception path must not
+    mask the wrapped function's original exception."""
+
+    def raise_fn(*args, **kwargs):
+        raise RuntimeError("MLflow end_run failed")
+
+    monkeypatch.setattr(mlflow, "end_run", raise_fn)
+
+    @mlflow_logging.log_tool_call
+    def broken_tool(x):
+        raise ValueError("original tool error")
+
+    with pytest.raises(ValueError, match="original tool error"):
+        broken_tool(x=1)
+
+
+def test_self_heals_stale_active_run_after_end_run_failures_stop(tracking_dir, monkeypatch):
+    """Finding 2: a swallowed end_run() failure must not permanently poison the
+    active-run stack for subsequent calls once end_run() starts working again."""
+
+    real_end_run = mlflow.end_run
+    fail_end_run = [True]
+
+    def maybe_raise_fn(*args, **kwargs):
+        if fail_end_run[0]:
+            raise RuntimeError("MLflow end_run failed")
+        return real_end_run(*args, **kwargs)
+
+    monkeypatch.setattr(mlflow, "end_run", maybe_raise_fn)
+
+    @mlflow_logging.log_tool_call
+    def suggest_rule(technique_id):
+        return {"suggestion": "try this rule"}
+
+    # First call: end_run() fails and is swallowed, leaving a stale active run.
+    result1 = suggest_rule(technique_id="T1078")
+    assert result1 == {"suggestion": "try this rule"}
+    assert mlflow.active_run() is not None
+
+    # end_run() recovers, but without self-healing the stale run from the
+    # previous call would still be sitting on the active-run stack.
+    fail_end_run[0] = False
+
+    result2 = suggest_rule(technique_id="T1079")
+    assert result2 == {"suggestion": "try this rule"}
+    assert mlflow.active_run() is None

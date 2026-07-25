@@ -104,6 +104,8 @@ experiment.
 
 View logged runs with `uv run mlflow ui --backend-store-uri ./mlruns`.
 
+Runs record tool arguments (e.g. `file_path`) and error text as MLflow params/tags, so for the default local `./mlruns` this carries the same trust boundary as the EVTX data itself — worth considering before pointing `MLFLOW_TRACKING_URI` at a shared or wider-audience tracking server.
+
 ## Running the server
 
 ```bash
