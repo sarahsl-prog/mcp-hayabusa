@@ -66,6 +66,12 @@ matching the SigmaHQ convention already used in `rules/`:
 `lnx_clear_syslog.yml`, `win_credential_access_mimikatz.yml`. No spaces, no
 camelCase, no hyphens in filenames.
 
+## Validation
+
+After creating or modifying a rule, validate it:
+python .claude/skills/detection-engineering/scripts/validate-rule.py path/to/rule.yml
+
+
 ## Review checklist
 
 When reviewing or writing a rule, verify all five before considering it done:
@@ -75,6 +81,7 @@ When reviewing or writing a rule, verify all five before considering it done:
 - [ ] `falsepositives` lists specific conditions (not bare `Unknown`)
 - [ ] At least one test case is documented (reference, PoC, or sample event)
 - [ ] Filename and title use lowercase_with_underscores
+- [ ] Rule passes validation script
 
 ## References
 
