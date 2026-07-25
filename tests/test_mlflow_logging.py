@@ -82,3 +82,48 @@ def test_user_tag_from_env(tracking_dir, monkeypatch):
 
     run = _latest_run()
     assert run.data.tags["mlflow.user"] == "sarahsl-prog"
+
+
+def test_success_returns_result_even_if_mlflow_logging_fails(tracking_dir, monkeypatch):
+    """Finding 1: Logging failures after func() succeeds must not break the tool."""
+
+    def raise_fn(*args, **kwargs):
+        raise RuntimeError("MLflow disk full")
+
+    monkeypatch.setattr(mlflow, "log_metric", raise_fn)
+
+    @mlflow_logging.log_tool_call
+    def suggest_rule(technique_id):
+        return {"suggestion": "try this rule"}
+
+    # Even though mlflow.log_metric() fails, the tool should still return its result
+    result = suggest_rule(technique_id="T1078")
+    assert result == {"suggestion": "try this rule"}
+    # Run should still be closed
+    assert mlflow.active_run() is None
+
+
+def test_original_exception_reraised_even_if_mlflow_also_fails(tracking_dir, monkeypatch):
+    """Finding 2: Original exception must be re-raised even if mlflow.set_tag() fails."""
+
+    call_count = [0]
+
+    def raise_on_second_call(*args, **kwargs):
+        call_count[0] += 1
+        if call_count[0] >= 2:
+            raise RuntimeError("MLflow connection lost")
+        # First call (for tool_name tag) succeeds
+        return None
+
+    monkeypatch.setattr(mlflow, "set_tag", raise_on_second_call)
+
+    @mlflow_logging.log_tool_call
+    def broken_tool(x):
+        raise ValueError("original error from tool")
+
+    # The original ValueError should be re-raised, not the MLflow RuntimeError
+    with pytest.raises(ValueError, match="original error from tool"):
+        broken_tool(x=1)
+
+    # Run should be closed even though mlflow.set_tag() failed
+    assert mlflow.active_run() is None

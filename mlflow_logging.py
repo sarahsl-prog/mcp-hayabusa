@@ -63,7 +63,10 @@ def log_tool_call(func):
         try:
             result = func(*args, **kwargs)
         except Exception:
-            mlflow.set_tag("status", "exception")
+            try:
+                mlflow.set_tag("status", "exception")
+            except Exception:
+                pass
             mlflow.end_run()
             raise
 
@@ -75,6 +78,8 @@ def log_tool_call(func):
                 mlflow.set_tag("status", "success")
             if isinstance(result, dict):
                 _log_result_fields(result)
+        except Exception:
+            pass
         finally:
             mlflow.end_run()
 
