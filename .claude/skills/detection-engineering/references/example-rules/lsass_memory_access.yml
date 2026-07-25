@@ -1,0 +1,39 @@
+title: Suspicious Access To LSASS Memory
+id: 9f2a4b6c-1d3e-4f5a-8b7c-2e4d6f8a0b1c
+status: test
+description: >
+  Detects process access to lsass.exe memory from an uncommon or
+  non-allowlisted process. Critical severity - LSASS holds credential
+  material in memory, and access from tooling like mimikatz/procdump-style
+  dumping indicates active credential theft with near-immediate compromise
+  impact.
+references:
+  - https://attack.mitre.org/techniques/T1003/001/
+  - https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection
+tags:
+  - attack.credential-access
+  - attack.t1003.001
+author: detection-engineering
+date: 2026-01-01
+level: critical
+falsepositives:
+  - EDR/AV agents that briefly access LSASS for memory scanning (allowlist by signed vendor process if this fires)
+  - Sysinternals Process Explorer/procdump used interactively by IT for legitimate troubleshooting
+logsource:
+  category: process_access
+  product: windows
+detection:
+  selection:
+    TargetImage|endswith: '\lsass.exe'
+    GrantedAccess:
+      - '0x1010'
+      - '0x1410'
+  filter:
+    SourceImage|startswith:
+      - 'C:\Program Files\'
+      - 'C:\Windows\System32\'
+  condition: selection and not filter
+# test case: TargetImage="C:\Windows\System32\lsass.exe", SourceImage="C:\temp\procdump.exe",
+#            GrantedAccess="0x1410" fires on the selection condition above (not excluded
+#            by filter, since C:\temp\ isn't allowlisted); verified against a synthetic
+#            process_access event.
