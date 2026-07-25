@@ -21,6 +21,7 @@ MCP server wrapping Hayabusa for EVTX (Windows Event Log) analysis. In addition 
 - `scanner.py` — Hayabusa scan/rule-listing logic, shared by server entry points
 - `sigma_rules.py` — Sigma rule listing/lookup logic over `rules/`, backs the `detection://rules*` resources
 - `attack_techniques.py` — ATT&CK technique/tactic lookup + rule-coverage assessment, backs `detection://attack/techniques/{id}` and the `analyze_coverage`/`suggest_rule` tools
+- `mlflow_logging.py` — MLflow run logging for MCP tool calls (params, result metrics, user/tool tags), wraps all four tools in `server.py`
 - `hayabusa/` — downloaded Hayabusa binary + bundled Sigma rules (gitignored, see Setup)
 - `rules/` — Sigma detection rules (YAML, gitignored, see Setup)
 - `mappings/` — ATT&CK technique/tactic to rule mappings (`attack_techniques.json`, `attack_tactics.json`, generated, see Setup)
@@ -45,3 +46,5 @@ It also exposes detection-KB resources backed by `rules/` (2941 Sigma rules from
 - `detection://rules/{rule_name}` — get a rule's full YAML content by filename stem
 - `detection://rules/by-technique/{technique_id}` — list rules tagged with a given ATT&CK technique
 - `detection://attack/techniques/{technique_id}` — technique name/description + detecting rules + coverage assessment (`covered` ≥2 rules, `partial` 1 rule, `gap` 0 rules)
+
+All four tools log their invocations to MLflow under the `hayabusa-mcp` experiment, configurable via `MLFLOW_TRACKING_URI` (run storage location, defaults to `./mlruns`) and `MLFLOW_TRACKING_USER` (run user tag, defaults to OS username).

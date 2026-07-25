@@ -90,6 +90,20 @@ python3 scripts/download_attack_data.py
 
 `download_attack_data.py` downloads the ~50MB STIX bundle and extracts compact indexes to `mappings/attack_techniques.json` (id/name/description/tactics) and `mappings/attack_tactics.json` (shortname → id/name). Re-run the script instead of committing the raw bundle.
 
+## Tool-call logging (MLflow)
+
+Every call to `scan_evtx`, `get_hayabusa_rules`, `analyze_coverage`, and
+`suggest_rule` is logged as an MLflow run under the `hayabusa-mcp`
+experiment.
+
+- `MLFLOW_TRACKING_URI` — where runs are stored. Defaults to a local
+  `./mlruns` directory if unset. Set this to point at a shared MLflow
+  tracking server instead.
+- `MLFLOW_TRACKING_USER` — the user tagged on each run. Defaults to the
+  local OS username (`getpass.getuser()`) if unset.
+
+View logged runs with `uv run mlflow ui --backend-store-uri ./mlruns`.
+
 ## Running the server
 
 ```bash
