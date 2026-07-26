@@ -90,6 +90,17 @@ python3 scripts/download_attack_data.py
 
 `download_attack_data.py` downloads the ~50MB STIX bundle and extracts compact indexes to `mappings/attack_techniques.json` (id/name/description/tactics) and `mappings/attack_tactics.json` (shortname → id/name). Re-run the script instead of committing the raw bundle.
 
+## Configuration (.env)
+
+Copy `.env.example` to `.env` to configure MLflow logging and transport
+without touching shell env or launcher config. `.env` is gitignored;
+values already set in the shell/launcher's own env take precedence over
+`.env`.
+
+```bash
+cp .env.example .env
+```
+
 ## Tool-call logging (MLflow)
 
 Every call to `scan_evtx`, `get_hayabusa_rules`, `analyze_coverage`, and
@@ -108,8 +119,22 @@ Runs record tool arguments (e.g. `file_path`) and error text as MLflow params/ta
 
 ## Running the server
 
+Defaults to stdio transport (for Claude Desktop/CLI clients that spawn
+the server as a subprocess):
+
 ```bash
 uv run server.py
+```
+
+For HTTP testing (e.g. MCP Inspector, curl), set in `.env` or the shell:
+
+- `MCP_TRANSPORT=streamable-http`
+- `MCP_HOST` — defaults to `127.0.0.1`
+- `MCP_PORT` — defaults to `8000`
+
+```bash
+MCP_TRANSPORT=streamable-http uv run server.py
+# serves at http://127.0.0.1:8000/mcp
 ```
 
 ## Registering with Claude Code
