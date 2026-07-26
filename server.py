@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """MCP server wrapping Hayabusa for EVTX analysis."""
 
+import os
+
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 import attack_techniques
@@ -8,7 +11,13 @@ import mlflow_logging
 import scanner
 import sigma_rules
 
-mcp = FastMCP("hayabusa")
+load_dotenv()
+
+MCP_TRANSPORT = os.environ.get("MCP_TRANSPORT", "stdio")
+MCP_HOST = os.environ.get("MCP_HOST", "127.0.0.1")
+MCP_PORT = int(os.environ.get("MCP_PORT", "8000"))
+
+mcp = FastMCP("hayabusa", host=MCP_HOST, port=MCP_PORT)
 
 _ORIGINAL_SIGNATURES = {
     "scan_evtx": ["file_path", "min_severity", "rule_filter", "output_format", "max_results", "tag_filter"],
@@ -120,7 +129,7 @@ def get_attack_technique(technique_id: str) -> dict:
 
 
 def main() -> None:
-    mcp.run()
+    mcp.run(transport=MCP_TRANSPORT)
 
 
 if __name__ == "__main__":
