@@ -2,8 +2,10 @@
 """MCP server wrapping Hayabusa for EVTX analysis."""
 
 import os
+import sys
 
 from dotenv import load_dotenv
+from loguru import logger
 from mcp.server.fastmcp import FastMCP
 
 import attack_techniques
@@ -16,6 +18,13 @@ load_dotenv()
 MCP_TRANSPORT = os.environ.get("MCP_TRANSPORT", "stdio")
 MCP_HOST = os.environ.get("MCP_HOST", "127.0.0.1")
 MCP_PORT = int(os.environ.get("MCP_PORT", "8000"))
+LOG_FILE = os.environ.get("LOG_FILE", "./logs/hayabusa-mcp.log")
+
+# stdio transport uses stdout for the MCP protocol itself, so logs must
+# never go there — stderr and/or a file only.
+logger.remove()
+logger.add(sys.stderr, level="INFO")
+logger.add(LOG_FILE, rotation="10 MB", retention=5, level="INFO")
 
 mcp = FastMCP("hayabusa", host=MCP_HOST, port=MCP_PORT)
 
@@ -129,7 +138,17 @@ def get_attack_technique(technique_id: str) -> dict:
 
 
 def main() -> None:
-    mcp.run(transport=MCP_TRANSPORT)
+    logger.info("Starting hayabusa MCP server (transport={}, host={}, port={})", MCP_TRANSPORT, MCP_HOST, MCP_PORT)
+    try:
+        mcp.run(transport=MCP_TRANSPORT)
+    except Exception:
+        logger.exception("hayabusa MCP server crashed")
+        raise
+    except KeyboardInterrupt:
+        logger.info("hayabusa MCP server stopped (KeyboardInterrupt)")
+        raise
+    else:
+        logger.info("hayabusa MCP server stopped")
 
 
 if __name__ == "__main__":

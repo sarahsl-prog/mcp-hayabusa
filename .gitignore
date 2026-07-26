@@ -8,3 +8,4 @@ venv/
 .entire/
 mlruns/
 .env
+logs/
