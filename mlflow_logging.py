@@ -13,6 +13,7 @@ import getpass
 import os
 
 import mlflow
+from dotenv import load_dotenv
 
 EXPERIMENT_NAME = "hayabusa-mcp"
 
@@ -21,6 +22,7 @@ _MAX_TAG_LEN = 250
 
 def configure() -> None:
     """Point MLflow at the configured tracking store and experiment."""
+    load_dotenv()
     tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "./mlruns")
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(EXPERIMENT_NAME)
